@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Master</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app">
+        <header class="app-header">
+            <h1>Task Master</h1>
+            <p class="subtitle">A tiny task manager backed by a Flask REST API</p>
+        </header>
+
+        <section class="add-task-card">
+            <form id="task-form">
+                <input type="text" id="title" placeholder="What needs to get done?" required maxlength="120">
+                <input type="text" id="description" placeholder="Add a short description (optional)" maxlength="500">
+
+                <div class="form-row">
+                    <select id="priority">
+                        <option value="low">Low priority</option>
+                        <option value="medium" selected>Medium priority</option>
+                        <option value="high">High priority</option>
+                    </select>
+                    <button type="submit">Add Task</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="tasks-section">
+            <div class="tasks-toolbar">
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                </div>
+                <span id="task-count" class="task-count"></span>
+            </div>
+
+            <ul id="task-list" class="task-list"></ul>
+
+            <p id="empty-state" class="empty-state" hidden>Nothing here yet — add your first task above.</p>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
