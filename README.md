@@ -4,7 +4,7 @@ A simple task management app built with **Flask** + **SQLite** on the backend
 and a lightweight **HTML/CSS/JS** frontend. Built as a small, resume-friendly
 example of a REST API project.
 
-## Deployed link: https://task-master-3kok.onrender.com/?filter=completed
+### Deployed link: https://task-master-3kok.onrender.com/?filter=completed
 **
 ## Features
 
@@ -49,7 +49,9 @@ task_master/
 
 The SQLite database file (`tasks.db`) is created automatically on first run.
 
-**After deployed:**
+## After deployed:
+
+
 <img width="570" height="395" alt="Screenshot 2026-07-31 210308" src="https://github.com/user-attachments/assets/a03efab0-c7b4-46cd-9217-c97c92fbb559" />
 
 <img width="516" height="401" alt="Screenshot 2026-07-31 210354" src="https://github.com/user-attachments/assets/400719a7-e2bb-4fe3-88a8-f3dcd108da59" />
