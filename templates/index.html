@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Master</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app">
+        <header class="app-header">
+            <h1>Task Master</h1>
+            <p class="subtitle">A tiny task manager built with Flask + SQLite</p>
+        </header>
+
+        <section class="add-task-card">
+            <form id="task-form" action="{{ url_for('add_task_form') }}" method="post">
+                <input type="text" name="title" placeholder="What needs to get done?" required maxlength="120">
+                <input type="text" name="description" placeholder="Add a short description (optional)" maxlength="500">
+
+                <div class="form-row">
+                    <select id="priority" name="priority">
+                        <option value="low">Low priority</option>
+                        <option value="medium" selected>Medium priority</option>
+                        <option value="high">High priority</option>
+                    </select>
+                    <button type="submit">Add Task</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="tasks-section">
+            <div class="tasks-toolbar">
+                <div class="filters">
+                    <a class="filter-btn {{ 'active' if current_filter == 'all' }}" href="{{ url_for('index', filter='all') }}">All</a>
+                    <a class="filter-btn {{ 'active' if current_filter == 'pending' }}" href="{{ url_for('index', filter='pending') }}">Pending</a>
+                    <a class="filter-btn {{ 'active' if current_filter == 'completed' }}" href="{{ url_for('index', filter='completed') }}">Completed</a>
+                </div>
+                <span class="task-count">
+                    {% if total %}{{ pending }} pending / {{ total }} total{% endif %}
+                </span>
+            </div>
+
+            {% if tasks %}
+            <ul class="task-list">
+                {% for task in tasks %}
+                <li class="task-item {{ 'completed' if task.completed }}">
+                    <form action="{{ url_for('toggle_task_form', task_id=task.id) }}" method="post" class="toggle-form">
+                        <button type="submit" class="toggle-btn" title="Mark {{ 'incomplete' if task.completed else 'complete' }}">
+                            {{ '✓' if task.completed else '' }}
+                        </button>
+                    </form>
+
+                    <div class="task-content">
+                        <p class="task-title">{{ task.title }}</p>
+                        {% if task.description %}
+                        <p class="task-description">{{ task.description }}</p>
+                        {% endif %}
+                        <div class="task-meta">
+                            <span class="priority-badge {{ task.priority }}">{{ task.priority }}</span>
+                            <span class="task-date">{{ task.created_at }}</span>
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('delete_task_form', task_id=task.id) }}" method="post">
+                        <button type="submit" class="delete-btn" title="Delete task">&times;</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="empty-state">Nothing here yet — add your first task above.</p>
+            {% endif %}
+        </section>
+    </div>
+
+</body>
+</html>
