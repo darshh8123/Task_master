@@ -45,7 +45,7 @@ task_master/
    python app.py
    ```
 
-4. Open your browser at `http://127.0.0.1:5000`
+4. Will be live at your browser at `http://127.0.0.1:5000`
 
 The SQLite database file (`tasks.db`) is created automatically on first run.
 
