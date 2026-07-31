@@ -1,21 +1,28 @@
 """
-Task Master - A simple task management REST API built with Flask + SQLite.
+Task Master - A simple task management app built with Flask + SQLite.
 
 Run with:
     python app.py
 
-The API is served under /api/tasks, and a small HTML/CSS/JS frontend
-is served at / for interacting with it in the browser.
+This project has two halves that share the same database:
+
+1. A REST API under /api/tasks (JSON in/out) - this is the piece worth
+   putting on a resume as a "Flask REST API" project.
+2. A plain server-rendered website (Jinja2 templates + HTML forms) under
+   / - no JavaScript at all. Every action (add/complete/delete/filter)
+   is a normal form submission or link, and the page reloads with the
+   result, the old-school way.
 
 Uses Python's built-in sqlite3 module with raw parameterized SQL
 (no ORM) to keep the project lightweight and SQL-focused.
 """
 
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, jsonify, request, render_template, g
+from flask import Flask, jsonify, request, render_template, redirect, url_for, g
 
 app = Flask(__name__)
 
@@ -72,15 +79,86 @@ def row_to_dict(row):
 
 
 # ---------------------------------------------------------------------------
-# Frontend route
+# Website routes (server-rendered, no JavaScript)
 # ---------------------------------------------------------------------------
 @app.route("/")
 def index():
-    return render_template("index.html")
+    """Show all tasks. Supports ?filter=pending / ?filter=completed."""
+    db = get_db()
+    task_filter = request.args.get("filter", "all")
+
+    if task_filter == "pending":
+        rows = db.execute(
+            "SELECT * FROM tasks WHERE completed = 0 ORDER BY created_at DESC"
+        ).fetchall()
+    elif task_filter == "completed":
+        rows = db.execute(
+            "SELECT * FROM tasks WHERE completed = 1 ORDER BY created_at DESC"
+        ).fetchall()
+    else:
+        task_filter = "all"
+        rows = db.execute("SELECT * FROM tasks ORDER BY created_at DESC").fetchall()
+
+    tasks = [row_to_dict(r) for r in rows]
+    total = db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    pending = db.execute("SELECT COUNT(*) FROM tasks WHERE completed = 0").fetchone()[0]
+
+    return render_template(
+        "index.html",
+        tasks=tasks,
+        current_filter=task_filter,
+        total=total,
+        pending=pending,
+    )
+
+
+@app.route("/add", methods=["POST"])
+def add_task_form():
+    """Handle the 'add task' HTML form (regular POST, page reload)."""
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    priority = request.form.get("priority", "medium")
+    if priority not in ("low", "medium", "high"):
+        priority = "medium"
+
+    if title:
+        db = get_db()
+        db.execute(
+            "INSERT INTO tasks (title, description, priority, completed, created_at) "
+            "VALUES (?, ?, ?, 0, ?)",
+            (title, description, priority, datetime.utcnow().strftime("%Y-%m-%d %H:%M")),
+        )
+        db.commit()
+
+    return redirect(url_for("index"))
+
+
+@app.route("/toggle/<int:task_id>", methods=["POST"])
+def toggle_task_form(task_id):
+    """Flip a task between completed / not completed."""
+    db = get_db()
+    row = db.execute("SELECT completed FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    if row is not None:
+        new_value = 0 if row["completed"] else 1
+        db.execute("UPDATE tasks SET completed = ? WHERE id = ?", (new_value, task_id))
+        db.commit()
+
+    return redirect(request.referrer or url_for("index"))
+
+
+@app.route("/delete/<int:task_id>", methods=["POST"])
+def delete_task_form(task_id):
+    """Delete a task via a plain HTML form button."""
+    db = get_db()
+    db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    db.commit()
+
+    return redirect(request.referrer or url_for("index"))
 
 
 # ---------------------------------------------------------------------------
-# REST API routes
+# REST API routes (JSON) - this is the part to reference on a resume as
+# "Flask REST API with SQLite backend, full CRUD".
 # ---------------------------------------------------------------------------
 @app.route("/api/tasks", methods=["GET"])
 def get_tasks():
@@ -189,4 +267,5 @@ def delete_task(task_id):
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
